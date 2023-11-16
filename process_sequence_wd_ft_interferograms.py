@@ -84,8 +84,7 @@ upper_frequ = 1 / (lambdanehe * 1e2)
 delta_nu = upper_frequ / N  # 1e-2 to convertit to cm
 # *2 #because the fft gives the spectrum twice and i dont cut it
 wn_axis = 2 / pad_factor * np.arange(N * pad_factor) * delta_nu
-bh_window = signal.windows.blackmanharris(
-    crop_size * 2 * pad_factor)  # blackman_harris window
+bh_window = signal.windows.blackmanharris(N)  # blackman_harris window
 
 
 for i in range(0, np.shape(array1)[1]):
@@ -110,14 +109,14 @@ for i in range(0, np.shape(array1)[1]):
     max_index = np.argmin(interferogram)
 
     centered_interf = interferogram[max_index -
-                                    crop_size:max_index + crop_size]
+                                    crop_size:max_index + crop_size] * (bh_window)
 
     centered_interf_padded = np.pad(centered_interf,
                                     (crop_size * (pad_factor - 1),
                                      crop_size * (pad_factor - 1)),
                                     mode='constant')
     kernel = (centered_interf_padded -
-              np.mean(centered_interf_padded)) * (bh_window)
+              np.mean(centered_interf_padded))
 
     # abs of fourier transform with zerofilling
     spectra[:, i] = np.abs(fft(kernel, norm="ortho"))
