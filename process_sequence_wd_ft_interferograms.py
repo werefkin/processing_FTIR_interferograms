@@ -21,15 +21,15 @@ lambdanehe = 632.8941914224686 * 1e-9  # 1/15800.429417*1e7 REF LASER
 crop_size = 30000  # Adjust this value as needed
 pad_factor = 4
 sigma = 0  # Adjust the standard deviation (sigma) as needed
-
+save = False
 
 # Plot each FT result
 plotft = False
 
 
 # Define the folder paths for reference signal (HeNe laser C3) and IR interferograms (C4)
-ref_laser_folder = "./c3/"
-interferograms_folder = "./c1/"
+ref_laser_folder = "./example/c3/"
+interferograms_folder = "./example/c1/"
 
 
 # Get frequency axis
@@ -147,10 +147,6 @@ for i in range(0, np.shape(array1)[1]):
 
 mean_psd = np.mean(spectra, axis=1)
 
-# Work with phase spectra
-phase = np.mean(angle_spectra, axis=1)
-
-
 # Generate a timestamp
 timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 
@@ -158,15 +154,12 @@ timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 filename = f"spectra_pc_{timestamp}.npy"
 
 
-ind_min = np.where(freqs < 2000)[0][-1]
-ind_max = np.where(freqs > 4500)[0][1]
+ind_min = np.where(freqs < 2650)[0][-1]
+ind_max = np.where(freqs > 3080)[0][1]
 
-# Save the array with the timestamp in the filename
-np.save(filename, spectra[:, ind_min:ind_max])
-np.save('wn_axis.npy', freqs[ind_min:ind_max])
-
-np.save(filename, spectra)
-np.save('wn_axis.npy', freqs)
+# Work with phase spectra
+phase = np.mean(angle_spectra, axis=1)
+phi = np.unwrap(phase[ind_min:ind_max])
 
 plt.figure()
 plt.plot(freqs, mean_psd)
@@ -183,3 +176,15 @@ plt.xlabel('Wavenumber (cm^-1)')
 plt.ylabel('Phase spectrum (a.u)')
 plt.title('Reconstructed spectrum')
 plt.show()
+
+if save is True:
+    np.save(r'phi_sa.npy', phi)
+    np.save('wn_axis.npy', freqs[ind_min:ind_max])
+    np.save('wn_axis.npy', freqs[ind_min:ind_max])
+    np.save('wn_axis_full.npy', freqs)
+    # Save the array with the timestamp in the filename
+    np.save(filename, spectra[:, ind_min:ind_max])
+    np.save('wn_axis.npy', freqs[ind_min:ind_max])
+
+    np.save(filename, spectra)
+    np.save('wn_axis.npy', freqs)
