@@ -97,7 +97,7 @@ kernels = np.zeros([crop_size * 2 * pad_factor, np.shape(array1)[1]])
 angle_spectra = np.zeros([crop_size * 2 * pad_factor, np.shape(array1)[1]])
 
 
-bh_window = np.blackman(2 * crop_size * pad_factor)  # blackman_harris window
+bh_window = np.blackman(2 * crop_size)  # blackman_harris window
 # Resampling, windowing, padding
 for i in range(0, np.shape(array1)[1]):
     # Apply Gaussian filter
@@ -120,12 +120,12 @@ for i in range(0, np.shape(array1)[1]):
     # Find the index of the maximum value in array2
     max_index = np.argmax(interferogram)
 
-    centered_interf = interferogram[max_index - crop_size:max_index + crop_size]
+    centered_interf = (interferogram[max_index - crop_size:max_index + crop_size] - np.mean(interferogram[max_index - crop_size:max_index + crop_size])) * (bh_window)
     centered_interf_padded = np.pad(centered_interf,
                                     (crop_size * (pad_factor - 1), crop_size * (pad_factor - 1)),
                                     mode='constant')
 
-    kernel = (centered_interf_padded - np.mean(centered_interf_padded)) * (bh_window)
+    kernel = (centered_interf_padded - np.mean(centered_interf_padded))
     kernels[:, i] = kernel
 
 
@@ -133,7 +133,7 @@ for i in range(0, np.shape(array1)[1]):
 for i in range(0, np.shape(array1)[1]):
     print('Interferograms processed: ', i)
     spec = fftshift(fft(fftshift(kernels[:, i]), norm="ortho"))  # fourier transform with zerofillingng
-    spectra[:, i] = np.abs(spec)
+    spectra[:, i] = np.real(spec)
     angle_spectra[:, i] = np.angle(spec)
 
     if plotft is True:
