@@ -156,20 +156,13 @@ theta = np.mean(angle_spec, axis=1)
 mean_psd = mean_real * np.cos(theta) + mean_imag * np.sin(theta)
 # mean_psd = np.mean(psds, axis = 1)
 
-# Generate a timestamp
-timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-
-# Define the filename with the timestamp
-filename = f"real_part_pc_{timestamp}.npy"
-filename_abs = f"mertz_corrected_psd_{timestamp}.npy"
-
 
 ind_min = np.where(freqs < 2100)[0][-1]
 ind_max = np.where(freqs > 3400)[0][1]
 
 # Work with phase real_part
 phase = np.mean(angle_spec, axis=1)
-phi = np.unwrap(phase[ind_min:ind_max])
+phi = np.unwrap(phase)
 
 plt.figure()
 plt.plot(freqs, mean_real)
@@ -207,12 +200,26 @@ plt.ylabel('Phase spectrum (a.u)')
 plt.title('Reconstructed spectrum')
 plt.show()
 
+# Generate a timestamp
+timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+
+# Define the filename with the timestamp
+filename_real = f"real_part_{timestamp}.npy"
+filename_imag = f"imag_part_{timestamp}.npy"
+filename_pds = f"mertz_corrected_psd_{timestamp}.npy"
+filename_pds_full = f"mertz_corrected_psd_full_{timestamp}.npy"
+filename_phi_full = f"phi_sa_{timestamp}.npy"
+filename_phi = f"phi_sa_{timestamp}.npy"
+
+filename_wn_full = f"wn_full_{timestamp}.npy"
+filename_wn = f"wn_crop_{timestamp}.npy"
+
 if save is True:
-    np.save(r'phi_sa.npy', phi)
-    np.save('wn_axis.npy', freqs[ind_min:ind_max])
-    np.save('wn_axis.npy', freqs[ind_min:ind_max])
-    np.save('wn_axis_full.npy', freqs)
-    # Save the array with the timestamp in the filename
-    np.save(filename, real_part[:, ind_min:ind_max])
-    np.save('wn_axis.npy', freqs[ind_min:ind_max])
-    np.save(filename_abs, mean_psd[ind_min:ind_max])
+    np.save(filename_phi_full, phi)
+    np.save(filename_phi, phi[ind_min:ind_max])
+    np.save(filename_wn, freqs[ind_min:ind_max])
+    np.save(filename_wn_full, freqs)
+    np.save(filename_real, real_part)
+    np.save(filename_imag, imag_part)
+    np.save(filename_pds, mean_psd[ind_min:ind_max])
+    np.save(filename_pds_full, mean_psd)
