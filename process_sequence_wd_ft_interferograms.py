@@ -92,9 +92,11 @@ array2 = array_3d_c4
 # Define the number of elements to keep on each side
 
 # Initialize empthy arrays for the data
-spectra = np.zeros([crop_size * 2 * pad_factor, np.shape(array1)[1]])
+real_part = np.zeros([crop_size * 2 * pad_factor, np.shape(array1)[1]])
+imag_part = np.zeros([crop_size * 2 * pad_factor, np.shape(array1)[1]])
+
 kernels = np.zeros([crop_size * 2 * pad_factor, np.shape(array1)[1]])
-angle_spectra = np.zeros([crop_size * 2 * pad_factor, np.shape(array1)[1]])
+angle_spec = np.zeros([crop_size * 2 * pad_factor, np.shape(array1)[1]])
 
 
 bh_window = np.blackman(2 * crop_size)  # blackman_harris window
@@ -133,11 +135,12 @@ for i in range(0, np.shape(array1)[1]):
 for i in range(0, np.shape(array1)[1]):
     print('Interferograms processed: ', i)
     spec = fftshift(fft(fftshift(kernels[:, i]), norm="ortho"))  # fourier transform with zerofillingng
-    spectra[:, i] = np.real(spec)
-    angle_spectra[:, i] = np.angle(spec)
+    real_part[:, i] = np.real(spec)
+    imag_part[:, i] = np.imag(spec)
+    angle_spec[:, i] = np.angle(spec)
 
     if plotft is True:
-        plt.plot(freqs, np.abs(spectra[:, i]))
+        plt.plot(freqs, np.abs(real_part[:, i]))
         plt.xlim([2126, 3400])
         plt.ylim([0, None])
         plt.xlabel('Wavenumber (cm^-1)')
@@ -145,29 +148,56 @@ for i in range(0, np.shape(array1)[1]):
         plt.title('Reconstructed spectrum')
         plt.savefig('reconstructed_spectrum.png', dpi=300, bbox_inches='tight')
 
-mean_psd = np.mean(spectra, axis=1)
+mean_real = np.mean(real_part, axis=1)
+mean_imag = np.mean(imag_part, axis=1)
+
+# Mertz correction
+theta = np.mean(angle_spec, axis=1)
+mean_psd = mean_real * np.cos(theta) + mean_imag * np.sin(theta)
+# mean_psd = np.mean(psds, axis = 1)
 
 # Generate a timestamp
 timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 
 # Define the filename with the timestamp
-filename = f"spectra_pc_{timestamp}.npy"
+filename = f"real_part_pc_{timestamp}.npy"
+filename_abs = f"mertz_corrected_psd_{timestamp}.npy"
 
 
-ind_min = np.where(freqs < 2650)[0][-1]
-ind_max = np.where(freqs > 3080)[0][1]
+ind_min = np.where(freqs < 2100)[0][-1]
+ind_max = np.where(freqs > 3400)[0][1]
 
-# Work with phase spectra
-phase = np.mean(angle_spectra, axis=1)
+# Work with phase real_part
+phase = np.mean(angle_spec, axis=1)
 phi = np.unwrap(phase[ind_min:ind_max])
+
+plt.figure()
+plt.plot(freqs, mean_real)
+plt.xlabel('Wavenumber (cm^-1)')
+plt.ylabel('PSD (a.u)')
+plt.title('Reconstructed spectrum: Real')
+plt.xlim([2126, 3400])
+plt.ylim([0, None])
+plt.show()
 
 plt.figure()
 plt.plot(freqs, mean_psd)
 plt.xlabel('Wavenumber (cm^-1)')
 plt.ylabel('PSD (a.u)')
-plt.title('Reconstructed spectrum')
+plt.title('Reconstructed spectrum: Mertz corrected')
 plt.xlim([2126, 3400])
 plt.ylim([0, None])
+plt.show()
+
+plt.figure()
+plt.plot(freqs, mean_real, label="Real")
+plt.plot(freqs, mean_psd, label="Mertz")
+plt.xlabel('Wavenumber (cm^-1)')
+plt.ylabel('PSD (a.u)')
+plt.title('Reconstructed spectra')
+plt.xlim([2126, 3400])
+plt.ylim([0, None])
+plt.legend()
 plt.show()
 
 plt.figure()
@@ -183,8 +213,6 @@ if save is True:
     np.save('wn_axis.npy', freqs[ind_min:ind_max])
     np.save('wn_axis_full.npy', freqs)
     # Save the array with the timestamp in the filename
-    np.save(filename, spectra[:, ind_min:ind_max])
+    np.save(filename, real_part[:, ind_min:ind_max])
     np.save('wn_axis.npy', freqs[ind_min:ind_max])
-
-    np.save(filename, spectra)
-    np.save('wn_axis.npy', freqs)
+    np.save(filename_abs, mean_psd[ind_min:ind_max])
